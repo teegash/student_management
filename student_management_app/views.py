@@ -1,4 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
+from django.core.exceptions import MultipleObjectsReturned
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
@@ -19,12 +21,19 @@ def doLogin(request):
     if request.method != "POST":
         return HttpResponse("<h2>Method Not Allowed</h2>")
     else:
-        user = EmailBackEnd.authenticate(request, username=request.POST.get("email"),password=request.POST.get("password"))
-        if user != None:
-            login(request, user)
-            return HttpResponse("Email : " + request.POST.get("email") + " Password : " + request.POST.get("password"))
-        else:
-            return HttpResponse("Invalid Login")
+        try:
+            user = EmailBackEnd.authenticate(request, username=request.POST.get("email"), password=request.POST.get("password"))
+
+            if user is not None:
+                login(request, user)
+                return HttpResponseRedirect('/admin_home')
+            else:
+                messages.error(request,"Invalid Login Details")
+                return HttpResponseRedirect("/")
+
+        except MultipleObjectsReturned:
+            # Handle the case where multiple users match the authentication criteria
+            return HttpResponse("Multiple users found. Please contact support.")
 
 
 # Creating get_user_details function
