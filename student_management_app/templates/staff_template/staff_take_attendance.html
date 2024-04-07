@@ -70,7 +70,7 @@ Take Attendance
 
               $.ajax({
                   url: '{% url 'get_students' %}',
-                  type: "POST",
+                  type: 'POST',
                   data: {subject:subject,session_year:session_year},
               })
               .done(function(response){
