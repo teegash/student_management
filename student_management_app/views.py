@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
-from django.core.exceptions import MultipleObjectsReturned
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 
 from student_management_app.EmailBackEnd import EmailBackEnd
 
@@ -21,19 +21,18 @@ def doLogin(request):
     if request.method != "POST":
         return HttpResponse("<h2>Method Not Allowed</h2>")
     else:
-        try:
-            user = EmailBackEnd.authenticate(request, username=request.POST.get("email"), password=request.POST.get("password"))
-
-            if user is not None:
-                login(request, user)
+        user = EmailBackEnd.authenticate(request,username=request.POST.get("email"),password=request.POST.get("password"))
+        if user is not None:
+            login(request, user)
+            if user.user_type=="1":
                 return HttpResponseRedirect('/admin_home')
+            elif user.user_type=="2":
+                return HttpResponseRedirect(reverse("staff_home"))
             else:
-                messages.error(request,"Invalid Login Details")
-                return HttpResponseRedirect("/")
-
-        except MultipleObjectsReturned:
-            # Handle the case where multiple users match the authentication criteria
-            return HttpResponse("Multiple users found. Please contact support.")
+                return HttpResponseRedirect(reverse("student_home"))
+        else:
+            messages.error(request,"Invalid Login Details")
+            return HttpResponseRedirect("/")
 
 
 # Creating get_user_details function

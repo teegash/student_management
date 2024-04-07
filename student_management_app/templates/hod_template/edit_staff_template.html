@@ -1,6 +1,6 @@
 {% extends 'hod_template/base_template.html' %}
 {% block page_title %}
-Add Staff
+Edit Staff | Username : {{ staff.admin.first_name }} | #ID : {{ staff.admin.id }}
 {% endblock page_title %}
 {% block main_content %}
     <!-- Main content -->
@@ -11,36 +11,33 @@ Add Staff
             <!-- general form elements -->
             <div class="card card-primary">
               <div class="card-header">
-                <h3 class="card-title">Add Staff</h3>
+                <h3 class="card-title">Edit Staff</h3>
               </div>
               <!-- /.card-header -->
               <!-- form start -->
-              <form role="form" action="/add_staff_save" method="post">
+              <form role="form" action="/edit_staff_save" method="post">
                   {% csrf_token %}
                 <div class="card-body">
                   <div class="form-group">
                     <label>Email address</label>
-                    <input type="email" class="form-control" name="email" placeholder="Enter email">
-                  </div>
-                  <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" class="form-control" placeholder="Password" name="password">
+                    <input type="email" class="form-control" name="email" placeholder="Enter email" value="{{ staff.admin.email }}">
                   </div>
                   <div class="form-group">
                     <label>First Name</label>
-                    <input type="text" class="form-control" placeholder="First Name" name="first_name">
+                    <input type="text" class="form-control" placeholder="First Name" name="first_name" value="{{ staff.admin.first_name }}">
                   </div>
                   <div class="form-group">
                     <label>Last Name</label>
-                    <input type="text" class="form-control" placeholder="Last Name" name="last_name">
+                    <input type="text" class="form-control" placeholder="Last Name" name="last_name" value="{{ staff.admin.last_name }}">
+                    <input type="hidden" name="staff_id" value="{{ staff.admin.id }}">
                   </div>
                   <div class="form-group">
                     <label>Username</label>
-                    <input type="text" class="form-control" placeholder="Username" name="username">
+                    <input type="text" class="form-control" placeholder="Username" name="username" value="{{ staff.admin.username }}">
                   </div>
                   <div class="form-group">
                     <label>Address</label>
-                    <input type="text" class="form-control" placeholder="Address" name="address">
+                    <input type="text" class="form-control" placeholder="Address" name="address" value="{{ staff.address }}">
                   </div>
                     <div class="form-group">
                         {% if messages %}
@@ -58,7 +55,7 @@ Add Staff
                 <!-- /.card-body -->
 
                 <div class="card-footer">
-                  <button type="submit" class="btn btn-primary btn-block">Add Staff</button>
+                  <button type="submit" class="btn btn-primary btn-block">Save Staff</button>
                 </div>
               </form>
             </div>

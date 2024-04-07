@@ -8,15 +8,21 @@ from django.dispatch import receiver
 # Create your models here.
 # Creating Class CustomUser and Passing Parent Abstract User,
 # So we can extend the default Auth User
+class SessionYearModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    session_start_year = models.DateField()
+    session_end_year = models.DateField()
+    object = models.Manager()
+
 class CustomUser(AbstractUser):
-    user_type_data = ((1,"HOD"),(2,"Staff"),(3,"Student"))  # Tuple set of admin,staff and student
-    user_type = models.CharField(default=1,choices=user_type_data,max_length=10)
+    user_type_data = ((1, "HOD"), (2, "Staff"), (3, "Student"))  # Tuple set of admin,staff and student
+    user_type = models.CharField(default=1, choices=user_type_data, max_length=10)
 
 
 # Creating Admin HOD Model and Adding Fields
 class AdminHOD(models.Model):
     id = models.AutoField(primary_key=True)
-    admin = models.OneToOneField(CustomUser,on_delete=models.CASCADE, default=None)
+    admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     object = models.Manager()
@@ -25,10 +31,11 @@ class AdminHOD(models.Model):
 # Creating Staff Model
 class Staffs(models.Model):
     id = models.AutoField(primary_key=True)
-    admin = models.OneToOneField(CustomUser,on_delete=models.CASCADE, default=None)
+    admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     address = models.TextField()
+
 
 # Creating Course Model
 class Courses(models.Model):
@@ -43,10 +50,10 @@ class Courses(models.Model):
 class Subjects(models.Model):
     id = models.AutoField(primary_key=True)
     subject_name = models.CharField(max_length=255)
-    course_id = models.ForeignKey(Courses, on_delete=models.CASCADE,default=1)
+    course_id = models.ForeignKey(Courses, on_delete=models.CASCADE, default=1)
 
     # Adding Staff Field in Subject Model and Linking Using Foreign Key
-    staff_id = models.ForeignKey(Staffs, on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     objects = models.Manager()  # Adding Object Field to Return Current Object Data
@@ -55,15 +62,14 @@ class Subjects(models.Model):
 # Creating Student Model
 class Students(models.Model):
     id = models.AutoField(primary_key=True)
-    admin = models.OneToOneField(CustomUser,on_delete=models.CASCADE, default=None)
+    admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE, default=None)
     gender = models.CharField(max_length=255)
     profile_pic = models.FileField()
     address = models.TextField()
 
     # Adding Course Field in Student model and Relating it to Course Model Using Foreign Key
     course_id = models.ForeignKey(Courses, on_delete=models.DO_NOTHING)
-    session_start_year = models.DateField(default=date.today)
-    session_end_year = models.DateField(default=date.today)
+    session_year_id = models.ForeignKey(SessionYearModel,on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
@@ -74,6 +80,7 @@ class Attendance(models.Model):
     subject_id = models.ForeignKey(Subjects, on_delete=models.DO_NOTHING)
     attendance_data = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    session_year_id = models.ForeignKey(SessionYearModel, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -153,25 +160,29 @@ class NotificationStaffs(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
     objects = models.Manager()
 
-#This method will run only when data is added to the CustomUser
-@receiver(post_save,sender=CustomUser)
 
-#Creating a Function which adds data into HOD, Staff and Student Table
+# Creating a Function which adds data into HOD, Staff and Student Table
+# This method will run only when data is added to the CustomUser
+@receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        if instance.user_type==1:
-            AdminHOD.objects.create(admin=instance)
-        if instance.user_type==2:
-            Staffs.objects.create(admin=instance,address="")
-        if instance.user_type==3:
-            Students.objects.create(admin=instance,course_id=Courses.objects.get(id=1),session_start_year="2020-01-01",session_end_year="2021-01-01",address="",profile_pic="",gender="",)
-#Method to call after create_user_profile execution
-@receiver(post_save,sender=CustomUser)
-def save_user_profile(sender,instance,**kwargs):
-    #Using the same condition to save the model of Admin,Staff and Student
-    if instance.user_type==1:
+        if instance.user_type == 1:
+            AdminHOD.object.create(admin=instance)
+        if instance.user_type == 2:
+            Staffs.objects.create(admin=instance, address="")
+        if instance.user_type == 3:
+            Students.objects.create(admin=instance, course_id=Courses.objects.get(id=1),
+                                    session_year_id=SessionYearModel.object.get(id=1), address="",
+                                    profile_pic="", gender="", )
+
+
+# Method to call after create_user_profile execution
+@receiver(post_save, sender=CustomUser)
+def save_user_profile(sender, instance, **kwargs):
+    # Using the same condition to save the model of Admin,Staff and Student
+    if instance.user_type == 1:
         instance.adminhod.save()
-    if instance.user_type==2:
+    if instance.user_type == 2:
         instance.staffs.save()
-    if instance.user_type==3:
+    if instance.user_type == 3:
         instance.students.save()
